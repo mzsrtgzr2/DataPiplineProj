@@ -7,8 +7,11 @@ The source data resides in S3 and needs to be processed in Sparkify's data wareh
 
 ## Project Setup - to run locally
 
-1. Install Airflow, create variable AIRFLOW_HOME and AIRFLOW_CONFIG with the appropiate paths, and place dags and plugins on airflor_home directory.
-2. Initialize Airflow data base with `airflow db init`
+1. Install Airflow, create variable AIRFLOW_HOME with the appropiate paths, and place dags and plugins on airflor_home directory.
+`export AIRFLOW_HOME=$(PWD)`
+2. run commands
+    - `airflow db init`
+    - `airflow users create --role Admin --username admin --email admin --firstname admin --lastname admin --password admin`
     - open webserver with `airflow webserver -D`
     - open schedculer with `airflow scheduler -D`
 3. Access the server `http://localhost:8080` and create:

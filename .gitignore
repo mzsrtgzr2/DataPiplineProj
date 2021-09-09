@@ -1,4 +1,5 @@
 airflow-webserver*
+airflow-schedule*
 airflow.cfg
 airflow.db
 logs/
