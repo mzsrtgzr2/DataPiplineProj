@@ -1,32 +1,61 @@
 from typing import Optional
+from datetime import datetime
+
 from airflow.hooks.postgres_hook import PostgresHook
 from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 class StageToRedshiftOperator(BaseOperator):
     ui_color = '#358140'
-
+    copy_sql_template = """
+    copy {table}
+    from {json_data}
+    region {region}
+    iam_role '{iam_role}'
+    timeformat as 'epochmillisecs'
+    json '{json_statement}'
+    BLANKSASNULL 
+    TRIMBLANKS
+    TRUNCATECOLUMNS    
+    """
+    delete_sql_template = """
+    TRUNCATE {table}
+    """
     @apply_defaults
     def __init__(self,
                 redshift_conn_id: str,
+                table: str,
                 s3file: str,
-                iam_role: Optional[str] = None,
+                region: str,
+                iam_role: str,
+                json_statement: str,
                  *args, **kwargs):
-
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
+        self.table = table
+        self.s3file = s3file
+        self.iam_role = iam_role
+        self.region = region
+        self.json_statement = json_statement
 
     def execute(self, context):
-        self.redshift_hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
-        conn = self.redshift_hook.get_conn()
-        cursor = conn.cursor()
-        sql = self._get_create_table_sql(
-            self._get_postgres_table_definition()
-        )
-        cursor.execute(sql)
+        redshift_hook = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        cursor.close()
-        conn.commit()
+        # delete content of table
+        self.log.info('drain table %s', self.table)
+        redshift_hook.run(self.delete_sql_template.format(self.table))
+        
+        # fill template variables
+        s3_path = self.s3file.format(**context)
+
+        self.log.info('copy to table %s from path %s', self.table, s3_path)
+        redshift_hook.run(self.copy_sql_template.format(
+            table=self.table,
+            json_data=s3_path,
+            region=self.region,
+            iam_role=self.iam_role,
+            json_statement=self.json_statement
+        ))
 
         return True
 
