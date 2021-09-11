@@ -1,18 +1,13 @@
 import json
 import pulumi
 import pulumi_aws as aws
-import configparser
 
 # CONFIG
-CONFIG_FILE='../dwh.cfg'
-config = configparser.ConfigParser()
-config.read(CONFIG_FILE)
-
-DB_NAME=config.get("CLUSTER","DB_NAME")
-DB_USER=config.get("CLUSTER","DB_USER")
-DB_PASSWORD=config.get("CLUSTER","DB_PASSWORD")
-DB_PORT=int(config.get("CLUSTER","DB_PORT"))
-IAM_ROLE_NAME = config.get("IAM_ROLE","NAME")
+DB_NAME='dbdemo'
+DB_USER='user1'
+DB_PASSWORD='p2mk5JK!'
+DB_PORT=6610
+IAM_ROLE_NAME = 'redshiftrole'
 
 
 redshift_role = aws.iam.Role(IAM_ROLE_NAME,
@@ -42,7 +37,9 @@ redshift_cluster = aws.redshift.Cluster("default",
     node_type="dc1.large",
     iam_roles=[redshift_role.arn],
     port=DB_PORT,
-    skip_final_snapshot=True)
+    skip_final_snapshot=True,
+    region='us-west-2'
+)
 
 pulumi.export('arn', redshift_role.arn)
 pulumi.export('host', redshift_cluster.dns_name)

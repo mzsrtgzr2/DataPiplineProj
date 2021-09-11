@@ -6,17 +6,20 @@ from airflow.models import BaseOperator
 from airflow.utils.decorators import apply_defaults
 
 class StageToRedshiftOperator(BaseOperator):
+    template_fields = ('s3file',)
+
     ui_color = '#358140'
     copy_sql_template = """
     copy {table}
-    from {json_data}
-    region {region}
+    from '{json_data}'
+    region '{region}'
     iam_role '{iam_role}'
     timeformat as 'epochmillisecs'
     json '{json_statement}'
     BLANKSASNULL 
     TRIMBLANKS
-    TRUNCATECOLUMNS    
+    TRUNCATECOLUMNS  
+    COMPUPDATE OFF  
     """
     delete_sql_template = """
     TRUNCATE {table}
@@ -43,21 +46,18 @@ class StageToRedshiftOperator(BaseOperator):
 
         # delete content of table
         self.log.info('drain table %s', self.table)
-        redshift_hook.run(self.delete_sql_template.format(self.table))
-        
-        # fill template variables
-        s3_path = self.s3file.format(**context)
+        redshift_hook.run(self.delete_sql_template.format(
+            table=self.table))
+    
 
-        self.log.info('copy to table %s from path %s', self.table, s3_path)
+        self.log.info('copy to table %s from path %s', self.table, self.s3file)
         redshift_hook.run(self.copy_sql_template.format(
             table=self.table,
-            json_data=s3_path,
+            json_data=self.s3file,
             region=self.region,
             iam_role=self.iam_role,
             json_statement=self.json_statement
         ))
-
-        return True
 
 
 

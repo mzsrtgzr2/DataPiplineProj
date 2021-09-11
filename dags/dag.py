@@ -16,8 +16,8 @@ REDSHIFT_CONNECTION_ID = 'redshift'
 # AWS_SECRET = os.environ.get('AWS_SECRET')
 
 default_args = {
-    'owner': 'udacity',
-    'start_date': datetime(2019, 1, 12),
+    'owner': 'moshe',
+    'start_date': datetime(2019,1,1),
     'retries': 3,
     'retry_delay': timedelta(minutes=5),
     'catchup': False,
@@ -26,10 +26,10 @@ default_args = {
     'email_on_retry': False,
 }
 
-dag = DAG('udac_example_dag',
+dag = DAG('sparkify_etl',
           default_args=default_args,
           description='Load and transform data in Redshift with Airflow',
-          schedule_interval='0 * * * *'
+          schedule_interval=None
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
@@ -44,7 +44,11 @@ stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag,
     redshift_conn_id=REDSHIFT_CONNECTION_ID,
-    s3file=Variable.get('s3_events_data'),
+    s3file=os.path.join(
+        Variable.get('s3_events_data'),
+            # '{{execution_date.year}}',
+            # '{{execution_date.month}}'
+    ),
     table='public.staging_events',
     region=Variable.get('raw_data_region'),
     iam_role=Variable.get('copy_iam_role'),
@@ -130,7 +134,8 @@ end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 
 start_operator >> create_tables_operator  >> [
-    stage_events_to_redshift, stage_songs_to_redshift
+    stage_events_to_redshift, 
+    stage_songs_to_redshift
     ] >> load_songplays_table >> [
         load_user_dimension_table,
         load_artist_dimension_table,

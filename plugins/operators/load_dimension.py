@@ -44,4 +44,4 @@ class LoadDimensionOperator(BaseOperator):
             source=self.load_source
         )
 
-        return redshift_hook.run(query)
+        redshift_hook.run(query)

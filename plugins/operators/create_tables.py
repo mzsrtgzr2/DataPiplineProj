@@ -19,4 +19,3 @@ class CreateTablesOperator(BaseOperator):
             postgres_conn_id=self.redshift_conn_id)
         with open('create_tables.sql', 'r') as fp:
             redshift_hook.run(fp.read())
-        return True

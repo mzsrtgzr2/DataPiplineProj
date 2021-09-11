@@ -24,4 +24,3 @@ class DataQualityOperator(BaseOperator):
 
         actual = redshift_hook.run(self.query)
         self.log.info('actual result = ', actual)
-        return True
