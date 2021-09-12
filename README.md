@@ -16,20 +16,6 @@ The source data resides in S3 and needs to be processed in Sparkify's data wareh
     - open schedculer with `airflow scheduler -D`
 3. Access the server `http://localhost:8080` and create:
 
-**AWS Connection**
-Conn Id: Enter aws_credentials.
-Conn Type: Enter Amazon Web Services.
-Login: Enter your Access key ID from the IAM User credentials you downloaded earlier.
-Password: Enter your Secret access key from the IAM User credentials you downloaded earlier.
-
-**Redshift Connection**
-Conn Id: Enter redshift.
-Conn Type: Enter Postgres.
-Host: Enter the endpoint of your Redshift cluster, excluding the port at the end. 
-Schema: This is the Redshift database you want to connect to.
-Login: Enter awsuser.
-Password: Enter the password created when launching the Redshift cluster.
-Port: Enter 5439.
 
 ## Data Source 
 * Log data: `s3://udacity-dend/log_data`
@@ -59,19 +45,6 @@ DAG parameters:
 * Email are not sent on retry
 
 
-DAG contains default_args dict bind to the DAG, with the following keys:
-   
-    * Owner
-    * Depends_on_past
-    * Start_date
-    * Retries
-    * Retry_delay
-    * Catchup
-
-* Task dependencies are set as following:
-
-![../images/airflow_data_pipeline.png](../images/airflow_data_pipeline.png)
-
 ### Operators
 Operators create necessary tables, stage the data, transform the data, and run checks on data quality.
 
@@ -82,7 +55,7 @@ All of the operators and task run SQL statements against the Redshift database.
 #### Stage Operator
 The stage operator loads any JSON and CSV formatted files from S3 to Amazon Redshift. The operator creates and runs a SQL COPY statement based on the parameters provided. The operator's parameters should specify where in S3 the file is loaded and what is the target table.
 
-- **Task to stage CSV and JSON data is included in the DAG and uses the RedshiftStage operator**: There is a task that to stages data from S3 to Redshift. (Runs a Redshift copy statement)
+- **Task to stage JSON data is included in the DAG and uses the RedshiftStage operator**: There is a task that to stages data from S3 to Redshift. (Runs a Redshift copy statement)
 
 - **Task uses params**: Instead of running a static SQL statement to stage the data, the task uses params to generate the copy statement dynamically. It also contains a templated field that allows it to load timestamped files from S3 based on the execution time and run backfills.
 

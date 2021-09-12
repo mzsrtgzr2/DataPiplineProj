@@ -41,7 +41,7 @@ class LoadDimensionOperator(BaseOperator):
 
         query = self.load_query_template.format(
             table = self.table,
-            source=self.load_source
+            load_source=self.load_source
         )
 
         redshift_hook.run(query)

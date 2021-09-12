@@ -110,25 +110,19 @@ load_time_dimension_table = LoadDimensionOperator(
     load_mode=LoadModes.overwrite,
 )
 
-fanout_tests_operator = DummyOperator(task_id='Fanout_tests',  dag=dag)
 
-
-run_quality_checks = [
-    DataQualityOperator(
+run_quality_checks = DataQualityOperator(
         task_id='Run_data_quality_checks.artists',
         dag=dag,
         redshift_conn_id=REDSHIFT_CONNECTION_ID,
-        query='select count(artist_id) from public.artists',
-        expected=1
-    ),
-    DataQualityOperator(
-        task_id='Run_data_quality_checks.songs',
-        dag=dag,
-        redshift_conn_id=REDSHIFT_CONNECTION_ID,
-        query='select count(song_id) from public.songs',
-        expected=1
-    ),
-]
+        tables=[
+            "public.songplays",
+            "public.users",
+            "public.songs",
+            "public.artists",
+            "public.\"time\""
+        ],
+    )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
@@ -141,4 +135,6 @@ start_operator >> create_tables_operator  >> [
         load_artist_dimension_table,
         load_song_dimension_table,
         load_time_dimension_table
-    ] >> fanout_tests_operator >> run_quality_checks >> end_operator
+    ] >> run_quality_checks >> end_operator
+
+# start_operator >> run_quality_checks >> end_operator
