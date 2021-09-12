@@ -38,7 +38,6 @@ redshift_cluster = aws.redshift.Cluster("default",
     iam_roles=[redshift_role.arn],
     port=DB_PORT,
     skip_final_snapshot=True,
-    region='us-west-2'
 )
 
 pulumi.export('arn', redshift_role.arn)
