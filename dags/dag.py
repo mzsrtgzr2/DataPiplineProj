@@ -11,7 +11,7 @@ from helpers import SqlQueries, LoadModes
 
 REDSHIFT_CONNECTION_ID = 'redshift'
 AWS_CONNECTION_ID = 'aws_credentials'
-S3_SONGS_DATA = 's3://udacity-dend/song_data/A/R/M'
+S3_SONGS_DATA = 's3://udacity-dend/song_data'
 S3_EVENTS_DATA = 's3://udacity-dend/log_data'
 S3_EVENTS_MANIFEST_JSON = 's3://udacity-dend/log_json_path.json'
 RAW_DATA_REGION = 'us-west-2'
