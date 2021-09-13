@@ -1,7 +1,5 @@
 from datetime import datetime, timedelta
-import os
 from airflow import DAG
-from airflow.models import Variable
 from airflow.operators.dummy_operator import DummyOperator
 from operators import (
     CreateTablesOperator,
@@ -12,8 +10,11 @@ from operators import (
 from helpers import SqlQueries, LoadModes
 
 REDSHIFT_CONNECTION_ID = 'redshift'
-# AWS_KEY = os.environ.get('AWS_KEY')
-# AWS_SECRET = os.environ.get('AWS_SECRET')
+AWS_CONNECTION_ID = 'aws_credentials'
+S3_SONGS_DATA = 's3://udacity-dend/song_data/A/R/M'
+S3_EVENTS_DATA = 's3://udacity-dend/log_data'
+S3_EVENTS_MANIFEST_JSON = 's3://udacity-dend/log_json_path.json'
+RAW_DATA_REGION = 'us-west-2'
 
 default_args = {
     'owner': 'moshe',
@@ -44,25 +45,21 @@ stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
     dag=dag,
     redshift_conn_id=REDSHIFT_CONNECTION_ID,
-    s3file=os.path.join(
-        Variable.get('s3_events_data'),
-            # '{{execution_date.year}}',
-            # '{{execution_date.month}}'
-    ),
+    aws_connection_id=AWS_CONNECTION_ID,
+    s3file=S3_EVENTS_DATA,
     table='public.staging_events',
-    region=Variable.get('raw_data_region'),
-    iam_role=Variable.get('copy_iam_role'),
-    json_statement=Variable.get('s3_events_json_manifest')
+    region=RAW_DATA_REGION,
+    json_statement=S3_EVENTS_MANIFEST_JSON
 )
 
 stage_songs_to_redshift = StageToRedshiftOperator(
     task_id='Stage_songs',
     dag=dag,
     redshift_conn_id=REDSHIFT_CONNECTION_ID,
-    s3file=Variable.get('s3_songs_data'),
+    aws_connection_id=AWS_CONNECTION_ID,
+    s3file=S3_SONGS_DATA,
     table='public.staging_songs',
-    region=Variable.get('raw_data_region'),
-    iam_role=Variable.get('copy_iam_role'),
+    region=RAW_DATA_REGION,
     json_statement='auto'
 )
 
