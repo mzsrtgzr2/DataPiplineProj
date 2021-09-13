@@ -7,11 +7,12 @@ from operators import (
     LoadFactOperator,
     LoadDimensionOperator,
     DataQualityOperator,)
-from helpers import SqlQueries, LoadModes
+from helpers import SqlQueries, LoadModes, DataCheck
+from operator import eq, gt
 
 REDSHIFT_CONNECTION_ID = 'redshift'
 AWS_CONNECTION_ID = 'aws_credentials'
-S3_SONGS_DATA = 's3://udacity-dend/song_data'
+S3_SONGS_DATA = 's3://udacity-dend/song_data/A/R/M'
 S3_EVENTS_DATA = 's3://udacity-dend/log_data'
 S3_EVENTS_MANIFEST_JSON = 's3://udacity-dend/log_json_path.json'
 RAW_DATA_REGION = 'us-west-2'
@@ -112,13 +113,40 @@ run_quality_checks = DataQualityOperator(
         task_id='Run_data_quality_checks.artists',
         dag=dag,
         redshift_conn_id=REDSHIFT_CONNECTION_ID,
-        tables=[
-            "public.songplays",
-            "public.users",
-            "public.songs",
-            "public.artists",
-            "public.\"time\""
-        ],
+        checks=[
+            DataCheck(
+                "SELECT COUNT(*) FROM public.songplays WHERE playid is null",
+                eq,
+                0),
+            DataCheck(
+                "SELECT COUNT(*) FROM public.songs WHERE songid is null",
+                eq,
+                0),
+            DataCheck(
+                "SELECT COUNT(*) FROM public.users WHERE userid is null",
+                eq,
+                0),
+            DataCheck(
+                "SELECT COUNT(*) FROM public.artists WHERE artistid is null",
+                eq,
+                0),
+            DataCheck(
+                "SELECT COUNT(*) FROM public.\"time\" WHERE start_time is null",
+                eq,
+                0),
+        ] + [
+            DataCheck(
+                f"SELECT COUNT(*) FROM {table}",
+                gt,
+                0)
+            for table in [
+                "public.songplays",
+                "public.users",
+                "public.songs",
+                "public.artists",
+                "public.\"time\""
+            ]
+        ]
     )
 
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
@@ -133,5 +161,3 @@ start_operator >> create_tables_operator  >> [
         load_song_dimension_table,
         load_time_dimension_table
     ] >> run_quality_checks >> end_operator
-
-# start_operator >> run_quality_checks >> end_operator
