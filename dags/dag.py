@@ -12,7 +12,7 @@ from operator import eq, gt
 
 REDSHIFT_CONNECTION_ID = 'redshift'
 AWS_CONNECTION_ID = 'aws_credentials'
-S3_SONGS_DATA = 's3://udacity-dend/song_data/A/R/M'
+S3_SONGS_DATA = 's3://udacity-dend/song_data'
 S3_EVENTS_DATA = 's3://udacity-dend/log_data'
 S3_EVENTS_MANIFEST_JSON = 's3://udacity-dend/log_json_path.json'
 RAW_DATA_REGION = 'us-west-2'
@@ -35,12 +35,6 @@ dag = DAG('sparkify_etl',
         )
 
 start_operator = DummyOperator(task_id='Begin_execution',  dag=dag)
-
-create_tables_operator = CreateTablesOperator(
-    task_id='Create_tables',
-    dag=dag,
-    redshift_conn_id=REDSHIFT_CONNECTION_ID
-)
 
 stage_events_to_redshift = StageToRedshiftOperator(
     task_id='Stage_events',
@@ -110,7 +104,7 @@ load_time_dimension_table = LoadDimensionOperator(
 
 
 run_quality_checks = DataQualityOperator(
-        task_id='Run_data_quality_checks.artists',
+        task_id='Run_data_quality_checks',
         dag=dag,
         redshift_conn_id=REDSHIFT_CONNECTION_ID,
         checks=[
@@ -152,7 +146,7 @@ run_quality_checks = DataQualityOperator(
 end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 
-start_operator >> create_tables_operator  >> [
+start_operator  >> [
     stage_events_to_redshift, 
     stage_songs_to_redshift
     ] >> load_songplays_table >> [
